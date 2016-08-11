@@ -1,0 +1,211 @@
+1.runAction的多重包含写法
+runAction(Sequence::create(MoveTo::create(),callFunc::create(CC_CALLBACK0(::))),NULL);
+
+
+2.内存申请
+Type *a=(Type*)malloc(sizeof(Type));
+free(a);
+
+3.CREAT_FUNC(HelloWorldLayer)相当于：
+HelloWorldLayer *HelloWorldLayer::create()
+{
+ HelloWorldLayer *layer= new HelloWorldLayer();
+if(layer && layer->init())
+{
+layer->autorelease();
+return layer;
+
+}
+
+CC_SAFE_DELETE(layer);
+return NULL;
+
+}
+
+
+4.Layer::create():
+Layer *Layer::create()
+{
+    Layer *ret = new Layer();
+    if (ret && ret->init())
+    {
+        ret->autorelease();
+        return ret;
+    }
+    else
+    {
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
+}
+
+
+//init
+
+bool Layer::init()
+{
+    Director * director = Director::getInstance();
+    setContentSize(director->getWinSize());
+    return true;
+}
+
+
+5.//实现3d水波效果
+effectNode=NodeGrid::create();
+    this->addChild(effectNode,10);
+    Sprite *title=Sprite::create("title.png");
+    title->setPosition(270,800);
+    effectNode->addChild(title,12);
+    Director::getInstance()->setDepthTest(false);
+    effectNode->runAction(RepeatForever::create(Ripple3D::create(2.0f, Size(32,24), Point(270,800), 360, 2, 5)));
+
+6. 随机数产生
+srand((unsigned)time(NULL));//种子,后面可以直接调用rand()产生随机数
+int number=rand()%4;  //产生0-3的随机数
+ 
+
+
+7. CheckBox
+(1)头文件
+#include “ui/CocosGUI.h”
+using namespace ui;
+（2）回调
+回调: void callBack(Ref* pSender, CheckBox::EventType type)
+（3）使用：
+CheckBox* checkMusic=CheckBox::create(…);
+checkMusic->setPostion(…);
+checkMusic->setSelectedState(bool ); //设置默认选择状态
+checkMusic->setEventListener(CC_CALLBACK_2());
+回调实现：
+void callBack(Ref* pSender,CheckBox::EventType type)
+{
+switch(type)
+case cocos2d::ui::CheckBox::EventType::SELECTED:
+…..
+
+}
+
+8.裁切精灵
+//设置drawNode模版
+Point pp[4];
+pp[0]=Point(); ….
+DrawNode* shape=DrawNode::create();
+shape->drawPolygon(pp,4,green,1,red);
+//设置clipper
+ClippingNode* clipper=ClippingNode::create();
+clipper->setStencil(shape) 
+clipper->addChild(sprite);
+this->addChild(clipper);
+
+
+9.
+   //帧动画
+    SpriteFrameCache* sfc=SpriteFrameCache::getInstance();
+    sfc->addSpriteFramesWithFile("bird.plist", "birdP.png");
+    std::string animBird[3]=
+    {
+    
+        "bird1.png",
+        "bird2.png",
+        "bird3.png"
+    
+    };
+    Vector<SpriteFrame*> animFrames;
+    animFrames.pushBack(sfc->getSpriteFrameByName(animBird[0]));
+    animFrames.pushBack(sfc->getSpriteFrameByName(animBird[1]));
+    animFrames.pushBack(sfc->getSpriteFrameByName(animBird[2]));
+    
+    Animation *anim=Animation::createWithSpriteFrames(animFrames,0.1f);
+    animAc=Animate::create(anim);
+    animAc->retain();
+
+
+10. schedule
+Director::getInstance()->getScheduler()->schedule(schedule_selector(birdLayer::update_bird), this, 0.05, false);
+
+11.Scale9Sprite的用法:用于无损拉伸精灵
+(1)头文件：#include “extensions/cocos-ext.h”
+using namespace cocos2d:: extension;
+(2)
+SpriteBatchNode* sprite=SpriteBatchNode::create(“…png”); //用于一次性绘制多个相同对象
+Scale9Sprite* scaleSprite=Scale9Sprite::create(); //可以直接调用Scale9Sprite ::create(“  ”)创建精灵
+scaleSprite->updateWithBatchNode(sprite,Rect(0,0,width,height),false,Rect(capInsets));//
+scaleSprite->setContentSize(Size(width,height));
+
+
+11进度条
+#include “cocos-ext.h”
+using namespce cocos2d::extension;
+
+Slider* slider=Slider::create();
+slider->loadBarTexture(“”);
+slider->loadProgressBarTexture(“”);
+slider->setPercent(100);
+
+
+
+12
+使用csb文件
+#include”ui/CososGUI.h”
+#include “cocostuido/Cocostudio.h”
+using namespace cocostudio;
+
+Node* rootNode=CSLoader::createNode(“MainScene.csb”);
+
+cocos2d::ui::Button* button1=static_cast<cocos2d::ui::Button*>(rootNode->getChildByName(“Button_1”));
+button1->addClickEventListener(CC_CALLBACK1(….));
+
+
+————
+csb的帧动画
+Node* rootNode=CSLoader::createNode(“TestScene.csb”);
+auto timeLine=CSLoader::createTimeline(“TestScene.csb”);
+timeLine->gotoFrameAndPlay(0);
+rootNode->runAction(timeLine);
+
+
+——
+
+13 plist 初始化
+
+//新建根目录类型和写入类型
+ValueMap root;
+ValueVector arr;
+
+arr.push_back( Value(123));  //Value()可包容多种类型
+
+root[“key”]=arr;
+
+
+std::string writablePath=FileUtils::getInstance()->getWritablePath();
+std::string path= writablePath +”List. plist”;
+
+FileUtils::getInstance()->writeToFile(root, path.c_str());  //写入
+
+
+14  plist本地保存  //只能保存在可写目录下，资源目录不可写
+
+std::string writablePath=FileUtils::getInstance()->getWritablePath();
+std::string path= writablePath +”List. plist”;
+
+auto root= FileUtils::getInstance()->getValueMapFromFile(path.c_str());//根目录为dic类型
+
+auto arr=root[“key”].asValueVector();  //此级为数组型
+
+arr[1]=10; //修改值
+
+root[“key”]=arr;  //回传
+
+FileUtils::getInstance()->writeToFile(root, path.c_str());  //写入
+    
+//不同层的触摸优先级
+ dispatcher->addEventListenerWithFixedPriority(lisetener, -128); //-128最高
+onExit(){ Director::getInstance()->getEventDispatcher()->removeEventListener(lisetener);
+};  //需要手动删除
+
+
+
+15截屏
+ std::string path=FileUtils::getInstance()->getWritablePath();
+    std::string fullPath=path+"screenshot.png";
+    utils::captureScreen(CC_CALLBACK_0(HelloWorld::showScreenshot, this), fullPath);

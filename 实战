@@ -1,0 +1,556 @@
+p35
+设置锚点： label->setAnchorPoint(Point( , )); 
+锚点为position坐标的相对精灵的位置。
+——————————————————————————————————
+p36
+刷新层：
+(1)在头文件中,重写update函数：
+virtual void update(float dt);
+(2)在cpp文件中:
+bool HelloWorld::init(){
+。。。
+
+this->scheduleUpdate();    //调用update刷新,不使用时需要停止刷新:this->unscheduleUpdate();
+
+}
+
+void HelloWorld::update(float dt)
+{ 
+执行需要刷新的操作
+}
+
+——————————————————————————
+p45
+字符串
+(1)c语言风格： const char * string =“nihao ”;
+(2)c++风格： std::string string=“nihao”;      // .c_str()转换为c的风格。
+(3)cocos: _string *string = _string ::create(“nihao”);   //使用string->getCString()来获取内容。
+
+————————————————————————————
+p53
+Label
+(1) auto label=Label::create(“nihao”,”Courier”,30);
+(2) auto label =Label::createWithTTF(“nihao”,”xxxx.ttf”,20);  //xxx.ttf为字体路经
+(3) auto label =Label::createWithBMFont(“xxxx.fnt”,”nihao”); //xxx.fnt为字体路经
+(4)阴影： label->enableShadow(Color4B(255,255,255,255),Size(4,-4)); //Color4B设置颜色；Size()设置阴影大小。
+（5）颜色: label->setColor(Color3B(255,255,255	))  // Color3B(r,g,b) 或者 Color3b::RED.
+————————————————————————————————
+p60
+设置menuItemFont：
+(1)头文件中定义回调函数： void menuItemCallBack(cocos2d::Ref *pSender);
+(2)cpp中定义回调函数：
+void menuItemCallBack(cocos2d::Ref *pSender){
+MenuItem *item=(MenuItem*) pSender;
+item->setPosition()。。。   //item已经指向了menu，对item操作即为对menu操作。
+…
+}
+(3)init方法中：
+MenuItemFont *menu=MenuItemFont::create(“start”,CC_CALLBACK_1(HelloWorld::menuItemCallBack,this)); //传入显示字符和回调函数。  
+Menu *mu=Menu::create(menu ,NULL);     //创建到menu中
+addChild(mu);
+
+——————————————————————————————
+p61
+设置MenuItemImage
+(1)头文件中申明回调函数：void MenuItemImageCallBack(Ref * pSender);
+(2)cpp中实现回调函数：
+void HelloWorld::MenuItemImageCallBack(Ref *pSender)
+{   MenuItem *item =(MenuItem*) pSender;
+item-> …….
+}
+(3)init方法中：
+MenuItemImage *menu = MenuItemImage::create(“正常状态图片”,”选择状态图片 ”,CC_CALLBACK_1(HelloWorld::MenuItemImageCallBack,this));
+
+Menu *mu=Menu::create(menu,NULL);
+addChild(mu);
+——————————————————————————————
+p61
+设置MenuItemSprite:
+(1)（2）同上
+（3） Spirte *正常状态的精灵 =Sprite::create(…);
+ Spirte *选择状态的精灵 =Sprite::create(…);
+
+MenuItemSprite *menu=MenuItemSprite::create(正常状态的精灵,选择状态的精灵 ,回调 )
+
+————————————————————————————————————
+p63
+设置开关 MenuItemToggle
+(1)(2) 同上
+(3) MenuItemToggle *menuitemtoggle= MenuItemToggle::createWithCallBack(
+CC_CALLBACK_1(HelloWorld::menucallback,this), MenuItemFont::create(“on”),MenuItemFont::create(“off”),NULL);      //可调用其它的MenuItem函数创建
+Menu *mu=Menu:create(menuitemtoggle,NULL);
+addChild(mu);
+(4)回调函数中识别开关状态：
+void HelloWorld::menucallback(Ref *pSender){
+auto menutoggle=(MenuItemToggle *)pSener;
+if(menutoggle->getSelectedIndex()==1    //getSelectedIndex()值是1则为on
+
+){}
+
+}
+
+————————————————————————————————
+p67
+纹理缓存：
+Texture2D *cache= Director::getInstance()->getTextureCache()->addImage(“1.png”); //将图片1.png添加到texture缓存cache。
+auto sth=Sprite::create(); 
+sth->setTexture(cache);  //从cache取出  
+sth->setTextureRect(Rect(100,100,100,100));  //设置需要截取缓存图片的区域。  Rect(x坐标,y坐标,x长度,y长度)
+————————————————————————————————————————
+p71
+精灵帧缓存
+SpriteFrameCache *framecache= SpriteFrameCache::getInstance();  //获取精灵帧缓存
+framecache->addSpriteFramesWithFile(“SpriteSheet.plist”); //添加plist文件到精灵帧缓存
+auto sht=Sprite::createWithSpriteFrameName(“xxx.png”);  //创建精灵
+SpriteFrameCache::getInstance()->removeSpriteFrames(); //释放精灵帧缓存
+
+————————————————————————————————————————
+p79
+通过menu进行场景转换：
+(1)新建一个场景的setting.cpp和setting.hpp文件。（本代码中场景和layer一一对应）
+(2)setting.hpp:
+ #include <cocos2d.h>
+#include <iostream>
+USING_NS_CC;
+
+class setting:public Layer{
+public:
+virtual bool init();  //重写初始化，setting层的自定操作都在初始化里
+static Scene *createscene();   //此语句实际为创建一个包含setting层的场景。
+CREATE_FUNC(setting);
+
+};
+(3)setting.cpp:
+
+Scene *setting::createscene(){     //其它地方调用此方法时，会创建一个包含setting层的场景，并初始化setting层。
+auto scene=Scene::create();
+auto layer=setting::create();
+scene->addChild(layer);
+return scene;
+}
+
+bool setting::init(){
+if(!Layer::init()){return false;}
+
+auto menu=MenuItemToggle::createWithCallBack(CC_CALLBACK_1(setting::calback),this),MenuItemFont::create(“on”),MenuItemFont::create(“off”),NULL);
+Menu *mu=Menu:create(menu,NULL);
+addChild(mu);
+
+return true;
+}
+(4)HelloWorld.cpp:
+
+init(){
+
+auto menu=MenuItemFont::create(“setting”,CC_CALLBACK_1(setting::menucallback),this);  //点击setting按钮跳转
+Menu *mu=Menu::create(menu,NULL);
+addChild(mu);
+}
+
+void HelloWorld::menucallback(Ref *pSender){
+auto sc=setting:createscene();   //创建setting层及场景
+Director::getInstance->pushScene(sc);  //pushScene将目前的层压入栈zhong。 popScene（）可弹出。
+
+}
+
+添加场景过渡动画效果：
+void HelloWorld::menucallback(Ref *pSender){
+auto sc=setting:createscene();             //创建setting层及场景
+auto resc=TransitionFade::creaete(1,sc);
+Director::getInstance->pushScene(resc);   //pushScene将目前的层压入栈zhong。 popScene（）可弹出。
+
+}
+————————————————————————
+p90
+精灵动作：sprite->runAction(MoveBy::create(Point()));
+通过一个层的按钮，来传递参数给另一个层：
+HelloWorld::init(){
+auto menu =MenuItemFont(“flipx”,CC_CALLBACK_1(HelloWorld::callBack,this));
+menu->setTag(123);
+}
+
+void callBack(Ref *pSender )
+{ MenuItem *item=(MenuItem*) pSender;
+auto scene=Scene::create();   //没有调用aciton的createScene是因为要穿入layer的tag。
+auto layer=action::create()
+layer->setTag(itmen->getTag());  //item此时指向menu,通过layer
+scene->addChild(layer);
+。。。。
+}
+
+————————————————
+p100
+动画组合
+ FiniteTimeAction *ac0= (FiniteTimeAction *)sprite->runAction(1);
+FiniteTimeAction *ac1=(FiniteTimeAction *)sprite->runAction(2);
+（1）顺序执行：  FiniteTimeAction *ac=Sequence::create(ac0,ac1,NULL);
+sprite->runAction(ac);
+(2)同时执行:  FiniteTimeAction *ac= Spawn::create(ac0,ac1,NULL);
+(3)重复执行：FiniteTimeAction *ac=Repeat::create(ac0,3);
+(4)调用函数：FiniteTimeAction *acf=CallFunc::create(CC_CALLBACK_0())  //CallFunc无参数
+  FiniteTimeAction *afc=CallFunN::create(CC_CALLBACK_1())  //CallFuncN有1个传递参数
+
+
+————————————————————————————
+p120
+3d特效：
+（1）创建3d特效对象： gridNodeTarget= NodeGrid::create();
+addChild(gridNodeTarget);
+(2)添加3d特效的精灵：
+gridNodeTarget->addChild(sprite);
+(3)执行：
+gridNodeTarget->runAction(Flip3D::create(3.0));   
+
+________________________
+p125
+帧动画：
+（1） 创建animation对象：  Animation ＊animation=Animation::create();
+(2)获取每帧的名称： 
+for(i=1;i<=4;i++)
+{ __String *frameName=__String::createWithFormat(“h%d.png”,i)
+SpriteFrame *spriteFrame=SpriteFrameCache::getInstance()->getSpriteFrameByName(frameName->getCString());
+animation->addSpriteFrame(spriteFrame);
+
+}
+animation->seDelayPerUnit(0.15)  //每帧播放时间；
+(3)执行animate:
+Animate *animate=Animate::create(animation);
+sprite->runAction(animate)；
+——————————————————————————
+p130
+触摸事件侦听
+auto sprite =Sprite::create(“boxa.png”);  //创建触摸事件的精灵
+    addChild(sprite,1,100); //1为显示权重，100为TAG值
+
+auto listener =EventListenerTouchOneByOne::create(); //创建触摸侦听器
+
+listener->onTouchBegan=[](Touch *t,Event *e){
+
+auto sprite=static_cast<Sprite *>(e->getCurrentTarget());  //将传入的node类型参数转换为sprite类型，即为boxa的精灵
+auto touchPoint=sprite->ConvertToNodeSpace(t->getLocation());//将触摸点坐标转换为boxa为基准的坐标
+Size s=sprite->getContentSize(); //获取boxa的尺寸
+Rect rect=Rect(0,0,s.width,s.height); //获取boxa所在的区域值
+if(rect.containsPoint(touchPoint)){   //判断触摸点是否在boxa的区域
+sprite->runAction(Scale::create(0.5,1.1));  //触摸特效
+return true;   //可继续onTouchMoved操作
+}
+return false;
+};
+
+listener->onTouchMoved=[](Touch *t,Event *e){
+auto sprite=static_cast<Sprite *>(e->getCurrentTarget());
+sprite->setPosition(sprite->getLocation()+t->getDelta());  //移动
+
+};
+
+listener->onTouchEnded=[](Touch *t,Event *e){
+auto sprite=static_cast<Sprite *>(e->getCurrentTarget());  //将传入的node类型参数转换为sprite类型，即为boxa的精灵
+auto touchPoint=sprite->ConvertToNodeSpace(t->getLocation());//将触摸点坐标转换为boxa为基准的坐标
+Size s=sprite->getContentSize(); //获取boxa的尺寸
+Rect rect=Rect(0,0,s.width,s.height); //获取boxa所在的区域值
+if(rect.containsPoint(touchPoint)){   //判断触摸点是否在boxa的区域
+sprite->runAction(Scale::create(0.5,1));  //触摸特效
+}
+};
+
+Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener,boxa); //注册触摸事件 
+____________________________
+p160
+音效
+（1）一般在delegete中预载入音乐文件 
+AppDelegate.h中引入头文件：
+#include “SimpleAudioEngine.h”
+using namespace CocosDenshion;
+
+AppDelegate.cpp aplicationDidFinishLaunching中：
+SimpleAudioEngine::getInstance()->preloadBackgroundMusic(“sound/Jazz.mp3”);
+SimpleAudioEngine::getInstance()->preloadEffect(“sound/Blip.mp3”);
+(2)一般重写层的onEnterTransitionDidFinish()方法来播放背景音乐：
+void HelloWord::onEnterTransitionDidFinish(){
+Layer::onEnterTransitionDidFinish();
+SimpleAudioEngine::getInstance()->playBackgroundMusic(“sound/Jazz.mp3”);}
+(3)一般在cleanup()中终止：
+
+void HelloWorld::cleanup(){
+Layer::cleanup();
+SimpleAudioEngine::getInstance()->stopBackgroundMusic(“sound/Jazz.mp3”);}
+
+}
+——————————————
+p180
+粒子系统
+（1）创建
+auto particle=ParticleFire::create();  //与精灵使用类似
+addChild(paritcle);
+
+(2)自定义with plist
+auto paticle =ParticleSystemQuad::create(“snow.plist”); 
+
+——————————————————————
+p190
+瓦片地图
+（1）头文件中申明：
+private:
+TMXTileMap *tileMap;
+Sprite *player;
+TMXLayer *collidable;
+public:
+virtual bool onTouchBegan(Touch *touch,Event *event); //
+virtual void onTouchEnded(Touch *touch,Event *event);  //在此方法中移动精灵
+(2)cpp中：
+tileMap=TMXTileMap::crete(“Map.tmx”);
+addChild(tileMap);
+
+TMXObjectGroup *group=tileMap->getObjectGroup(“objects”);//获取名为object的group
+ValueMap point = group->getObject(“ninja”); //获取ninja的坐标点
+
+float x=point[“x”].asFloat(); 
+float y=point[“y”].asFloat();
+
+player =Sprite::create(“ninja.png”);
+player->setPosition(Point(x,y));
+addChild(player);
+
+collidable =tileMap->getLayer(“collidable”);  //获取瓦片地图中标记为collidable的碰撞检测层
+collidable->setVisible(false);
+
+setTouchEnabled(true);
+setTouchMode(Touch::Dispatcher::ONE_BY_ONE);
+
+（3）virtual void onTouchEnded(Touch *touch,Event *event){
+auto touchPoint=touch->getLocation();
+touchPoint=this->convertToNodeSpace(touchPoint);   //对应屏幕移动的坐标转换
+auto playerPosition=player->getPosition();
+auto diff =touchPoint-playerPosition;
+if(abs(diff.x)>abs(diff.y)){
+  if(diff.x>0){
+    playerPosition.x+=tileMap->getTileSize().width;
+      
+    }else{
+	playerPosition.x-=tileMap->getTileSize().width;
+}
+else{
+	if(diff.y>0){	
+	playerPosition.y+=tileMap->getTileSize().height;
+}	else{
+	playerPosition.y-=tileMap->getTilzSize().height;
+}
+
+
+}
+
+}
+this->setPlayerPosition(playerPosition);
+this->setCenter(playerPosition);
+}
+
+(4)void HelloWorld::setPlayerPosition(Point p){
+auto tielCoord=this->tileCoordFromPosition(p); //将要移动到的点转化为瓦片坐标
+int Gid= collidable->getTIleGIDAt(tileCoord);  //获取碰撞层的有效瓦片
+if(Gid>0){ return}  // 判断移动点是否包含在碰撞层 
+player->setPosition(p);
+}
+（5）坐标转换：
+Point HelloWrold::tileCoordFromPosition(Point p)
+{int x=p.x/tileMap->getTileSize().width;
+int y =((tileMap->getMapsize().height*tileMap->getTileSize().height)-p.y)/tileMap->getTileSize().height;   //瓦片地图以左上角为原点，y轴需转换一下
+return Point(x,y);
+
+}
+(6)屏幕中心移动：
+void HelloWorld::setCenter(Point p){
+ Size visableSize=Director::getInstance()->getVisibleSize();
+ int x=MAX(p.x, visableSize.width/2);
+ int y=MAX(p.y, visableSize.height/2);
+    
+    
+ x=MIN(x, tileMap->getMapSize().width*tileMap->getTileSize().width-visableSize.width/2);
+ y=MIN(y, tileMap->getMapSize().height*tileMap->getTileSize().height-visableSize.height/2);
+    
+auto size=Point(visableSize.width/2,visableSize.height/2);
+auto diff=size-Point(x,y);       //中心需要移动的坐标；层初始坐标为（0，0）
+this->setPosition(diff);    //HelloWorld层移动
+
+
+}
+————————————————
+p270
+UserDefault
+(1)获取数据：
+std::string ret= UserDefault::getInstance()->getStringForKey(“string”);  //UserDefault为单例
+(2)设置数据
+UserDefault::getInstance()->setStringForKey(“string”,”value”);   // 定义项为key
+
+————————————————
+p280
+plist 之_Dictionary
+(1) 
+//创建plist文件
+auto root= _Dictionary::create();
+auto writableFile= FileUtils::getInstance()->getWritablePath();
+auto filePath=writableFile+”Note.plist”;
+//创建plist文件
+（2）
+//准备添加的元素
+auto string=_String::create(“nihao”); 
+auto dict=_Dictionary::create();
+dict->setObject(_String::create(“hahha”),”string”)
+//准备添加的元素
+
+root->setObject(string,”1”);
+root->setObject(dict,”2”);   //添加元素
+
+root->writeToFile(filePath.c_str()); //filePath为string类型，而writeToFile()要求const char类型，需要使用.c_str()转换。
+（3）
+//读取
+auto root=_Dictionary::creatWithContentsOfFile(filePath.c_str()) //读取到已创建的字典
+auto content= static_cast<_String*>( root->objectForKey(“1”))  //key 1对应的为_String 类型，objectForKey（）获取的为Ref类型，需要类型转换。
+
+
+——————————————————
+plist之ValueMap
+(1)
+//创建
+ValueMap root;
+
+auto string=_String::create(“nihao”); 
+auto dict=_Dictionary::create();
+
+root[“1”]=string;
+root[“2”]=dict;   
+FileUtils::getInstance()->writeToFile(root,filePath); 
+(2)//读取
+auto root=FileUtils::getInstance()->getValueMapFormFile(filePath);
+auto string=root[“1”].asString; //root[]读取到的为Value类型，需要转换.asString();
+(3)//删除
+auto root=FileUtils::getInstance()->getValueMapFormFile(filePath);
+root.erase[“1”];
+FileUtils::getInstance()->writeToFile(root,filePath); 
+————————————————————————————————————
+
+p290
+sqlite的使用：
+
+    sqlite3 *pDB=NULL;
+    char * errMsg=NULL;
+    std::string sqlstr;
+    int result;
+    
+    
+    // 获取地址
+   result=sqlite3_open(fillPaht.c_str(), &pDB);
+    if (result!=SQLITE_OK) {
+        log("open failed");
+        
+    }
+    
+    //新建
+    result=sqlite3_exec(pDB, "create table Mytable_1(ID integer primary key autoincrement, name nvachar(32))", NULL, NULL, &errMsg);
+    if (result!=SQLITE_OK) {
+        log("创建失败, %s",errMsg);
+    }
+    
+      //插入
+   sqlstr="insert into Mytable_1(name) values('你妹')";
+    result=sqlite3_exec(pDB, sqlstr.c_str(), NULL, NULL, &errMsg);
+    if (result!=SQLITE_OK) {
+        log("写入失败 %s",errMsg);
+    }
+    
+    //插入
+    sqlstr="insert into Mytable_1 (ID,name) values(10,'ergou')";
+    result=sqlite3_exec(pDB, sqlstr.c_str(), NULL, NULL, &errMsg);
+    if (result!=SQLITE_OK) {
+      log("写入失败 %s",errMsg);
+    }
+    
+    //更新
+    sqlstr="update Mytable_1 set name='zzz' where ID= 1";
+    result= sqlite3_exec(pDB, sqlstr.c_str(), NULL, NULL, &errMsg);
+    if (result!=SQLITE_OK) {
+        log("写入失败 %s",errMsg);}
+    
+    
+    //删除
+    sqlstr="delete from Mytable_1 where ID=10";
+    result=sqlite3_exec(pDB, sqlstr.c_str(), NULL, NULL, &errMsg);
+    
+    if (result!=SQLITE_OK) {
+        log("delete失败 %s",errMsg);
+    }
+    
+    
+    //查询表是否存在
+    bool isExist;
+    sqlstr="select count(type) from sqlite_master where type='table' and name='Mytable_1'";
+    result=sqlite3_exec(pDB, sqlstr.c_str(), isExisted, &isExist, &errMsg);
+    log("%d",isExist);
+
+    
+//查询记录条数
+    int count;
+    sqlstr="select *from Mytable_1";
+    result=sqlite3_exec(pDB, sqlstr.c_str(), loadRecordCount, &count, &errMsg);
+    log("count is =%d",count);
+
+    //读取一条记录
+    sqlstr="select *from Mytable_1 where ID=1";
+    result =sqlite3_exec(pDB, sqlstr.c_str(),loadRecord, NULL,&errMsg);
+    
+
+
+//回调函数
+int isExisted(void * para,int n_column, char **column_value, char ** column_name)
+{
+    
+    bool *isExisted_=(bool *)para;
+    *isExisted_=(**column_value)!='0';
+    return 0;
+}
+
+
+int loadRecordCount( void * para, int n_column, char ** column_value, char ** column_name )
+{
+    int *count=(int*)para;
+    *count=n_column;
+    return 0;
+}
+
+int loadRecord(void *para,int n_column, char ** column_value,char **column_name    ){
+
+    log("id= %s, name =%s", column_value[0],column_value[1]);
+
+    return 0;
+}
+
+————————————————————————————————————————
+//塔防类：tileMap对象点坐标的读取
+TMXObjectGroup *objects=map->getObjectGroup(“key1”); 
+ValueMap point=objects->getObject(“key2”);  //valueMap类型为键－值对类型
+Node *runOfPoints=Node::create(); //新建node对象来设置坐标
+Vector<Node *>pointsVector; //存放取出的坐标点的node类
+
+while(point.begin()!=point.end())  //point在循环时只有一个值，且valuemap类的begin为第一个元素，end为最后一个元素的后一位:It does not point to any element, and thus shall not be dereferenced.故当取到最后一个对象时，下一次循环的while不成立。
+{
+float x=point.at(“x”).asFloat();
+float y=point.at(“y”).asFloat();
+
+runOfPoints->setPosition(Point(x,y));
+
+this->pintsVector.pushBack(runOfPoints);  //压入node类带有位置属性的对象。
+
+point=objects->getObject(“key2++”);
+
+}
+
+______————————————————————————
+  //获取当前时间
+    struct timeval noewTimal;
+    gettimeofday(&noewTimal, NULL);
+    struct tm*tm;
+    time_t time_sec;
+    time_sec=noewTimal.tv_sec;
+    tm=localtime(&time_sec);
+tm->tm_hour;
+
+    
